@@ -11,6 +11,7 @@ It provides system information and incorporates a simple notification system fro
     - [Environment variables](#environment-variables)
     - [Run](#run)
     - [Use with cron](#use-with-cron)
+    - [Notifications](#notifications)
     - [Commands available in chat](#commands-available-in-chat)
       - [```/reboot```](#reboot)
         - [Example](#example)
@@ -41,13 +42,13 @@ It provides system information and incorporates a simple notification system fro
     pip install -r requirements.txt
     ```
 
-4. Set the environment variables of the “.env” file (see [Environment variables](#environment-variables)).
+4. Set the environment variables of the ".env" file (see [Environment variables](#environment-variables)).
 
 ## Usage
 
 ### Environment variables
 
-The environment variables are required to work and are located in the “.env” file.
+The environment variables are required to work and are located in the ".env" file.
 
 These are:
 
@@ -88,6 +89,19 @@ and add next line modifying with the correct path in your case:
 
 ```shell
 @reboot sleep 40; /home/user/server-telegram-bot/.venv/bin/python3 /home/user/server-telegram-bot/main.py --hello --noti  -t 60
+```
+
+### Notifications
+
+It checks the files in NOTI_PATH, reads their content and sends, for each one of them, a message with the file name (app/script where the message comes from), the creation time and the content.
+
+The file, depending on the configuration, would be deleted after the message is sent or moved to the "old" folder inside NOTI_PATH. If there is an error reading the file, the error message is sent and the file is moved to the "errors" folder inside NOTI_PATH.
+
+For example, for the file "app_A" with the content "It's a text", the message would be:
+
+```text
+app_A at 14:12:
+It's a text
 ```
 
 ### Commands available in chat
