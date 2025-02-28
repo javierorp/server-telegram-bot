@@ -1,0 +1,4 @@
+[FORMAT]
+max-module-lines=1500
+max-line-length=120
+disable=bare-except,no-member
