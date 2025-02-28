@@ -11,7 +11,11 @@ It provides system information and incorporates a simple notification system fro
     - [Environment variables](#environment-variables)
     - [Run](#run)
     - [Use with cron](#use-with-cron)
-- [Example](#example)
+    - [Commands available in chat](#commands-available-in-chat)
+      - [```/reboot```](#reboot)
+        - [Example](#example)
+      - [```/status```](#status)
+        - [Example](#example-1)
   - [How-To](#how-to)
     - [Obtain your bot token](#obtain-your-bot-token)
     - [Obtain your user id](#obtain-your-user-id)
@@ -86,7 +90,23 @@ and add next line modifying with the correct path in your case:
 @reboot sleep 40; /home/user/server-telegram-bot/.venv/bin/python3 /home/user/server-telegram-bot/main.py --hello --noti  -t 60
 ```
 
-# Example
+### Commands available in chat
+
+#### ```/reboot```
+
+Reboot the server asking for user confirmation (Yes/No)
+
+##### Example
+
+```text
+Rebooting the system... 🔄
+```
+
+#### ```/status```
+
+Displays system information
+
+##### Example
 
 Example of the ```/status``` command.
 
