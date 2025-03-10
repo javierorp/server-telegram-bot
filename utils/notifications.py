@@ -8,6 +8,9 @@ from datetime import datetime
 from telegram.ext import ContextTypes
 
 
+SIZE_LIMIT = 1024  # Size limit in bytes to send full notification
+
+
 async def get_notifications(context: ContextTypes.DEFAULT_TYPE):
     """Check the notifications and send them to the chat"""
 
@@ -20,15 +23,16 @@ async def get_notifications(context: ContextTypes.DEFAULT_TYPE):
             files = [f for f in os.listdir(
                 noti_path) if os.path.isfile(os.path.join(noti_path, f))]
             files_with_dates = [(file, os.path.getctime(
-                os.path.join(noti_path, file))) for file in files]
+                os.path.join(noti_path, file)), os.path.getsize(os.path.join(noti_path, file))) for file in files]
 
             files_with_dates.sort(key=lambda x: x[1])
 
             if len(files_with_dates) != 0:
                 logging.debug("New files detected: %s", len(files_with_dates))
 
-            for file, ctime in files_with_dates:
-                logging.debug("[%s] Posix_time=%s", file, int(ctime))
+            for file, ctime, size in files_with_dates:
+                logging.debug("[%s] Posix_time=%s, size=%s bytes",
+                              file, int(ctime), size)
                 time_str = datetime.fromtimestamp(ctime).strftime("%H:%M")
                 date_str = datetime.fromtimestamp(ctime).strftime("%Y-%m-%d")
                 curr_date_str = datetime.now().strftime("%Y-%m-%d")
@@ -41,20 +45,21 @@ async def get_notifications(context: ContextTypes.DEFAULT_TYPE):
                     msg += ":"
 
                 try:
-                    with open(os.path.join(noti_path, file), "r", encoding="utf-8") as f:
-                        msg += f"\n{f.read()}"
+                    if size > SIZE_LIMIT:
+                        b_read = 250
+                        logging.debug(
+                            "File too long. Only sending the first and last %s bytes", b_read)
+                        with open(os.path.join(noti_path, file), "rb") as f:
+                            first_bytes = f.read(b_read)
+                            f.seek(-b_read, os.SEEK_END)
+                            last_bytes = f.read(b_read)
+                            msg += f"\nNotification too long ({size/1024:.2f} KB)"
+                            msg += f"\n\nFirst {b_read} bytes:\n{first_bytes.decode('utf-8', errors='ignore')}..."
+                            msg += f"\n\nLast {b_read} bytes:\n...{last_bytes.decode('utf-8', errors='ignore')}"
 
-                    if store:
-                        old_dir = os.path.join(noti_path, "old")
-
-                        if not os.path.exists(old_dir):
-                            os.makedirs(old_dir)
-
-                        new_file_name = f"{file.split('.')[0]}_{int(time.time())}"
-                        os.rename(os.path.join(noti_path, file),
-                                  os.path.join(old_dir, new_file_name))
                     else:
-                        os.remove(os.path.join(noti_path, file))
+                        with open(os.path.join(noti_path, file), "r", encoding="utf-8") as f:
+                            msg += f"\n{f.read()}"
 
                 except Exception as e:
                     logging.error(
@@ -74,7 +79,23 @@ async def get_notifications(context: ContextTypes.DEFAULT_TYPE):
                                                text=msg,
                                                parse_mode="HTML")
 
+                if size > SIZE_LIMIT:
+                    await context.bot.send_document(chat_id=os.getenv("CHAT_ID"),
+                                                    document=open(os.path.join(noti_path, file), "rb"))
+
                 logging.debug("[%s] Notification sent", file)
+
+                if store:
+                    old_dir = os.path.join(noti_path, "old")
+
+                    if not os.path.exists(old_dir):
+                        os.makedirs(old_dir)
+
+                    new_file_name = f"{file.split('.')[0]}_{int(time.time())}"
+                    os.rename(os.path.join(noti_path, file),
+                              os.path.join(old_dir, new_file_name))
+                else:
+                    os.remove(os.path.join(noti_path, file))
 
                 time.sleep(5)
 

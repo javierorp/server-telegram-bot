@@ -102,6 +102,8 @@ A logging is incorporated to the application that, if enabled (```--log [DEBUG |
 
 It checks the files in NOTI_PATH, reads their content and sends, for each one of them, a message with the file name (app/script where the message comes from), the creation time and the content.
 
+If the notification file exceeds 1024 bytes (this limit can be modified by rewriting the ```SIZE_LIMIT``` variable in the ```notifications.py``` file), the first and last 250 bytes are sent as text and the full notification is sent as an attachment.
+
 The file, depending on the configuration, would be deleted after the message is sent or moved to the "old" folder inside NOTI_PATH. If there is an error reading the file, the error message is sent and the file is moved to the "errors" folder inside NOTI_PATH.
 
 For example, for the file "app_A" with the content "It's a text", the message would be:
