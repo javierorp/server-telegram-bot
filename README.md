@@ -11,6 +11,7 @@ It provides system information and incorporates a simple notification system fro
     - [Environment variables](#environment-variables)
     - [Run](#run)
     - [Use with cron](#use-with-cron)
+    - [Logging](#logging)
     - [Notifications](#notifications)
     - [Commands available in chat](#commands-available-in-chat)
       - [```/reboot```](#reboot)
@@ -63,13 +64,15 @@ To run the script by command:
 
 ```shell
 ~$ python main.py --help
-usage: main.py [-h] [--hello] [--noti] [--save-noti] [-t TIME]
+usage: main.py [-h] [--hello] [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [--noti] [--save-noti] [-t TIME]
 
 It provides system information and incorporates a simple notification system from other scripts.
 
 options:
   -h, --help            show this help message and exit
   --hello               Send a message when the bot starts.
+  -l {DEBUG,INFO,WARNING,ERROR,CRITICAL}, --log {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                        Enable and set the log level. Possible values are DEBUG, INFO, WARNING, ERROR, CRITICAL. Default disabled.
   --noti                Enable the notification check.
   --save-noti           Notifications are not deleted after sending. They are stored in a 'old' folder inside NOTI_PATH.
   -t TIME, --time TIME  Time in seconds to check new notifications to be sent. Default 10.
@@ -90,6 +93,10 @@ and add next line modifying with the correct path in your case:
 ```shell
 @reboot sleep 40; /home/user/server-telegram-bot/.venv/bin/python3 /home/user/server-telegram-bot/main.py --hello --noti  -t 60
 ```
+
+### Logging
+
+A logging is incorporated to the application that, if enabled (```--log [DEBUG | INFO | WARNING | ERROR | CRITICAL]``` option), stores in the ```bot.log``` file (in the folder where the ```main.py``` file is located) the traceability. A maximum of 2 log files of up to 1 MB each are stored, but this can be modified by rewriting the ```LOG_MAX``` and ```LOG_BCK_NUM``` variables in the ```main.py``` file.
 
 ### Notifications
 

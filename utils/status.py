@@ -1,9 +1,10 @@
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument,broad-except
 """System information"""
 
 from datetime import datetime
 import os
 import shutil
+import logging
 import subprocess
 import time
 import psutil
@@ -14,6 +15,8 @@ from telegram.ext import ContextTypes
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Get the status of the system"""
+
+    logging.debug("Status command received")
 
     # ---- Info ----
     def get_current_datetime():
@@ -31,12 +34,16 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             uptime_seconds = time.time() - psutil.boot_time()
             return format_uptime(int(uptime_seconds))
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the uptime: [%s] - %s", type(e).__name__, str(e))
             try:
                 with open("/proc/uptime", "r", encoding="utf-8") as f:
                     uptime_seconds = float(f.readline().split()[0])
                 return format_uptime(int(uptime_seconds))
-            except:
+            except Exception as e2:
+                logging.error(
+                    "Unable to get the uptime: [%s] - %s", type(e2).__name__, str(e2))
                 return "Unknown"
 
     def get_upgradable_packages():
@@ -45,7 +52,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ["apt", "list", "--upgradable"]).decode()
             lines = output.strip().split("\n")
             return len(lines) - 1 if len(lines) > 1 else 0
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the upgradable packages: [%s] - %s", type(e).__name__, str(e))
             return "Unknown"
 
     # ---- CPU ----
@@ -54,7 +63,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq", "r", encoding="utf-8") as f:
                 freq = int(f.read().strip()) / 1000  # MHz
             return f"{freq} MHz"
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the CPU frequency: [%s] - %s", type(e).__name__, str(e))
             return "Unknown"
 
     def get_voltage():
@@ -62,21 +73,27 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             output = subprocess.check_output(
                 ["vcgencmd", "measure_volts", "core"]).decode()
             return output.strip().replace("volt=", "")
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the voltage: [%s] - %s", type(e).__name__, str(e))
             return "Unknown"
 
     def get_scaling_governor():
         try:
             with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r", encoding="utf-8") as f:
                 return f.read().strip()
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the scaling governor: [%s] - %s", type(e).__name__, str(e))
             return "Unknown"
 
     def get_cpu_load():
         try:
             load_1, load_5, load_15 = os.getloadavg()
             return f"\n     1 min: {round(load_1, 2)}\n     5 min: {round(load_5, 2)}\n     15 min: {round(load_15, 2)}"
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the CPU load: [%s] - %s", type(e).__name__, str(e))
             return "Unknown"
 
     def get_cpu_temperature():
@@ -84,12 +101,16 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             output = subprocess.check_output(
                 ["vcgencmd", "measure_temp"]).decode()
             return output.strip().replace("temp=", "").replace("'C", "°C")
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the CPU temperature: [%s] - %s", type(e).__name__, str(e))
             try:
                 with open("/sys/class/thermal/thermal_zone0/temp", "r", encoding="utf-8") as f:
                     temp = int(f.read().strip()) / 1000  # Convertir a °C
                 return f"{temp}°C"
-            except:
+            except Exception as e2:
+                logging.error(
+                    "Unable to get the CPU temperature: [%s] - %s", type(e2).__name__, str(e2))
                 return "Unknown"
 
     # ---- RAM ----
@@ -101,7 +122,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             percent = memory.percent
 
             return f"{used:.2f} GB of {total:.2f} GB ({percent}%)"
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the RAM: [%s] - %s", type(e).__name__, str(e))
             return "Unknown"
 
     # ---- Network ----
@@ -110,7 +133,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             response = requests.get(
                 "https://api.ipify.org?format=json", timeout=30)
             return response.json().get('ip')
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the public IPv4: [%s] - %s", type(e).__name__, str(e))
             return "-"
 
     def get_public_ipv6():
@@ -118,7 +143,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             response = requests.get(
                 "https://api64.ipify.org?format=json", timeout=30)
             return response.json().get('ip')
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the public IPv6: [%s] - %s", type(e).__name__, str(e))
             return "-"
 
     def get_network_stats():
@@ -143,7 +170,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return (
                 f"\n     Used: {used_mb:.2f} {size_f} ({perc_used:.2f}%)\n"
                 + f"     Free: {free_mb:.2f} {size_f}\n     Total: {total_mb:.2f} {size_f}")
-        except:
+        except Exception as e:
+            logging.error(
+                "Unable to get the storage info: [%s] - %s", type(e).__name__, str(e))
             return "Unknown"
 
     # ---- Data ----
@@ -191,3 +220,4 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             data += f"<b>{name}:</b> {get_storage_info(path)}\n"
 
     await context.bot.send_message(chat_id=os.getenv("CHAT_ID"), text=data, parse_mode="HTML")
+    logging.debug("Status message sent")
